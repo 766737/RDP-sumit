@@ -1,0 +1,6 @@
+python-telegram-bot==21.4
+aiogram==3.4.1
+requests
+faker
+pyrogram
+tgcrypto
