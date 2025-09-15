@@ -11,9 +11,6 @@ ACCESS_LIST = []  # user_ids with access
 
 # --- Formatter ---
 def format_result(raw_text, data_type):
-    """
-    Clean, concise, emoji-enhanced formatting for OSINT results
-    """
     lines = raw_text.splitlines()
     formatted_lines = []
     person_counter = 1
@@ -22,11 +19,9 @@ def format_result(raw_text, data_type):
         line = line.strip()
         if not line:
             continue
-        # Person separator
         if any(k in line.lower() for k in ["name", "person"]):
             formatted_lines.append(f"\n🔎 {data_type.capitalize()} Person {person_counter}:")
             person_counter += 1
-        # Map fields to emoji
         if "name" in line.lower():
             val = line.split(":",1)[-1].strip()
             formatted_lines.append(f"👤 Name: {val}")
@@ -72,7 +67,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/vehicle <number>\n"
         "/aadhaar <number>\n"
         "/upi <upi_id>\n"
-        "/access <chat_id> (Admin only)"
+        "/access <chat_id> (Admin only)\n"
+        "/remove <chat_id> (Admin only)\n"
+        "/listaccess (Admin only)"
     )
 
 async def give_access(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -92,6 +89,33 @@ async def give_access(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except:
         await update.message.reply_text("❌ Invalid chat_id")
 
+async def remove_access(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await is_admin(update):
+        await update.message.reply_text("❌ You are not authorized to use this command.")
+        return
+    if not context.args:
+        await update.message.reply_text("Usage: /remove <chat_id>")
+        return
+    try:
+        user_id = int(context.args[0])
+        if user_id in ACCESS_LIST:
+            ACCESS_LIST.remove(user_id)
+            await update.message.reply_text(f"🚫 Access removed for user {user_id}")
+        else:
+            await update.message.reply_text("❌ User does not have access.")
+    except:
+        await update.message.reply_text("❌ Invalid chat_id")
+
+async def list_access(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await is_admin(update):
+        await update.message.reply_text("❌ You are not authorized to use this command.")
+        return
+    if ACCESS_LIST:
+        users = "\n".join([f"🆔 {uid}" for uid in ACCESS_LIST])
+        await update.message.reply_text(f"✅ Current Access List:\n\n{users}")
+    else:
+        await update.message.reply_text("ℹ️ No users have been granted access yet.")
+
 async def fetch_osint(update: Update, context: ContextTypes.DEFAULT_TYPE, field):
     user_id = update.effective_user.id
     if not await check_access(user_id):
@@ -105,7 +129,6 @@ async def fetch_osint(update: Update, context: ContextTypes.DEFAULT_TYPE, field)
     try:
         raw = requests.get(url).text
         formatted = format_result(raw, field)
-        # Telegram message splitting for 4096 char limit
         for i in range(0, len(formatted), 4000):
             await update.message.reply_text(formatted[i:i+4000])
     except Exception as e:
@@ -129,6 +152,8 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("access", give_access))
+    app.add_handler(CommandHandler("remove", remove_access))
+    app.add_handler(CommandHandler("listaccess", list_access))
     app.add_handler(CommandHandler("numinfo", numinfo))
     app.add_handler(CommandHandler("vehicle", vehicle))
     app.add_handler(CommandHandler("aadhaar", aadhaar))
