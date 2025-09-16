@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # ========= CONFIG =========
-BOT_TOKEN = "8051121625:AAHzLJuDSMtEbpyVnM_vgYGJBvpZqPAkJVo"
+BOT_TOKEN = "8001726856:AAFZ9kZ-iO1VH39b2zDuXiUGPsWTtYZchjY"
 API_BASE = "https://osint.stormx.pw/index.cpp?key=dark"
 ADMIN_IDS = [7549280896]  # admin chat_id list
 ACCESS_LIST = []  # user_ids with access
@@ -164,3 +164,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
